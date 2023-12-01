@@ -1,0 +1,44 @@
+Nx := 2048
+Ny := 64
+Nz := 16
+setgridsize(Nx, Ny, Nz)
+
+c := 3.75e-9/2
+cz := 2*15e-9/Nz
+setcellsize(c, c, cz)
+SetPBC(8, 8*Nx/Ny, 0) 
+
+defRegion(0, Layers(3, 5))
+defRegion(1, Layers(5, 8))
+
+
+
+RKKY_J1 := -0.667e-3
+RKKY_J2 := -0.284e-3 // J/m2
+
+prefactorZJ1 := Const( (RKKY_J1) / (cz*Msat.Average()))
+prefactorZJ2 := Const( (2*RKKY_J2) / (cz*Msat.Average()))
+up   := Mul(Add(Mul(Const(-1),m),Shifted(m,0,0, 1)),Shifted(Const(1),0,0, 1))
+down := Mul(Add(Mul(Const(-1),m),Shifted(m,0,0,-1)),Shifted(Const(1),0,0,-1))
+
+up2   := Mul(Mul(Add(Mul(Const(-1),m),Shifted(m,0,0, 1)),Shifted(Const(1),0,0, 1)), Dot(m, Shifted(m,0,0,1)))
+down2 := Mul(Mul(Add(Mul(Const(-1),m),Shifted(m,0,0,-1)),Shifted(Const(1),0,0,-1)), Dot(m, Shifted(m,0,0,-1)))
+
+BcJ1 :=Mul(prefactorZJ1,Add(up,down))
+BcJ2 :=Mul(prefactorZJ2,Add(up2,down2))
+
+Bc := Add(BcJ1, BcJ2)
+
+shape := Layers(3, 5)
+
+BcMasked := Masked(Bc, shape)
+
+AddFieldTerm(BcMasked)                                                                               
+
+ext_scaleExchange(0, 1, 0)
+
+
+m.setRegion(0, uniform(0, 1, 0))
+m.setRegion(1, uniform(0, -1, 0))
+
+

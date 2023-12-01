@@ -1,0 +1,32 @@
+N := 2048
+Nz := 2
+setgridsize(N, N, Nz)
+
+c := 20e-9
+cz := 15e-9
+setcellsize(c, c, cz)
+SetPBC(32, 32, 0) 
+
+defRegion(0, layer(0))
+defRegion(1, layer(1))
+
+
+
+RKKY_J1 := -1.58e-3 // 1mJ/m2
+
+prefactorZ := Const( (2 * RKKY_J1) / (cz*cz*Msat.Average()))
+up := Mul(Add(Mul(Const(-1),m),Shifted(m,0,0, 1)),Shifted(Const(1),0,0, 1))
+down := Mul(Add(Mul(Const(-1),m),Shifted(m,0,0,-1)),Shifted(Const(1),0,0,-1))
+Bc :=Mul(prefactorZ,Add(up,down))
+
+AddFieldTerm(Bc)
+addEdensTerm(Mul(Const(-0.5),Dot(Bc,M_full)))
+
+
+ext_scaleExchange(0, 1, 0)
+
+
+m.setRegion(0, uniform(1, 0, 0))
+m.setRegion(1, uniform(-1, 0, 0))
+
+
